@@ -1,0 +1,2 @@
+--изменение параметров устройств
+fibaro.call(deviceID,"setConfiguration", 50, 1, 0);
