@@ -1,0 +1,73 @@
+#include "ZUNO_DS18B20.h"
+
+// Global variables
+
+OneWire ow(11);
+DS18B20Sensor ds18b20(&ow);
+
+byte addresses[8 * 1 + 8]; // last one for search
+byte number_of_sensors; // Number of sensors found (if less than 1 connected)
+signed int temperature[1];
+
+byte pin13SwitchMultilevelState = 0;
+
+byte pin14SwitchMultilevelState = 0;
+
+byte pin15SwitchMultilevelState = 0;
+
+byte pin16SwitchMultilevelState = 0;
+
+// Z-Wave channels
+ZUNO_SETUP_CHANNELS(
+  ZUNO_SENSOR_MULTILEVEL(ZUNO_SENSOR_MULTILEVEL_TYPE_TEMPERATURE, SENSOR_MULTILEVEL_SCALE_CELSIUS, SENSOR_MULTILEVEL_SIZE_TWO_BYTES, SENSOR_MULTILEVEL_PRECISION_ONE_DECIMAL, pin11SensorDS18B20Getter_1),
+  ZUNO_SWITCH_COLOR(SWITCH_COLOR_FLAGS_WARM_WHITE | SWITCH_COLOR_FLAGS_BLUE | SWITCH_COLOR_FLAGS_GREEN | SWITCH_COLOR_FLAGS_RED, pinsSwitchColorGetter, pinsSwitchColorSetter)
+);
+
+void setup() {
+  number_of_sensors = ds18b20.findAllSensors(addresses);
+
+  pinMode(13, OUTPUT);
+
+  pinMode(14, OUTPUT);
+
+  pinMode(15, OUTPUT);
+
+  pinMode(16, OUTPUT);
+}
+
+void loop() {
+  if (number_of_sensors >= 1) {
+    temperature[0] = ds18b20.getTempC100(&addresses[8 * 0])/10;
+    zunoSendReport(1 + 0);
+  }
+
+  analogWrite(13, pin13SwitchMultilevelState);
+
+  analogWrite(14, pin14SwitchMultilevelState);
+
+  analogWrite(15, pin15SwitchMultilevelState);
+
+  analogWrite(16, pin16SwitchMultilevelState);
+
+  delay(20);
+}
+
+// Getters and setters
+
+word pin11SensorDS18B20Getter_1() {
+  return temperature[0];
+}
+
+void pinsSwitchColorSetter(byte color, byte value) {
+  if (color == SWITCH_COLOR_COMPONENT_WARM_WHITE) pin13SwitchMultilevelState = value;
+  if (color == SWITCH_COLOR_COMPONENT_BLUE) pin14SwitchMultilevelState = value;
+  if (color == SWITCH_COLOR_COMPONENT_GREEN) pin15SwitchMultilevelState = value;
+  if (color == SWITCH_COLOR_COMPONENT_RED) pin16SwitchMultilevelState = value;
+}
+
+byte pinsSwitchColorGetter(byte color) {
+  if (color == SWITCH_COLOR_COMPONENT_WARM_WHITE) return pin13SwitchMultilevelState;
+  if (color == SWITCH_COLOR_COMPONENT_BLUE) return pin14SwitchMultilevelState;
+  if (color == SWITCH_COLOR_COMPONENT_GREEN) return pin15SwitchMultilevelState;
+  if (color == SWITCH_COLOR_COMPONENT_RED) return pin16SwitchMultilevelState;
+}
